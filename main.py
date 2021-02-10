@@ -69,4 +69,6 @@ def send_checklist_to_keep(check_list):
     else:
         console.log("[red]ECHEC synchronisation de la note vers Google Keep[/red]")
 
+console.log("[blue][b]Bonjour, Bienvenue dans l'outils de synchronisation de recette trello/keep[/b][/blue]")
 main()
+
