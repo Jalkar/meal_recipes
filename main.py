@@ -1,11 +1,12 @@
 from trello import TrelloApi, checklists
 import json
 from secrets import Secrets
+from recipe import Recipe
+from ingredient import Ingredient
 import gkeepapi
 from rich import print
 
 from rich.console import Console
-from rich.markdown import Markdown
 
 console = Console()
 
@@ -32,14 +33,11 @@ def get_trello_check_list():
             console.log(f"{list['name']}")        
             cards = trello.lists.get_card(list["id"],checklists="all",fields="name,attachments,labels,desc")
             for card in cards:
-                console.log(f"  |-{card['name']}")
-                # if card['desc']:                    
-                #     markdown = Markdown(card['desc'])
-                #     console.print(markdown)
-                for checklist in card["checklists"]:
-                    if checklist["name"]=="LISTE DE COURSES":
-                        for item in checklist["checkItems"]:                           
-                            all_ingredients.append(item["name"])
+                recipe=Recipe(card)    
+                console.log(f"  |-{recipe}")    
+                console.log(f"    |-{recipe.ingredients}")    
+                all_ingredients += recipe.ingredients
+                
     # print(json.dumps(cards, sort_keys=True, indent=4,ensure_ascii=False))    
     console.log("Tous les ingrédients à prévoir:")
     console.log(all_ingredients)
@@ -56,13 +54,13 @@ def send_checklist_to_keep(check_list):
             console.log(f"found {note.title}")
             for item in note.unchecked:
                 if item.text.strip():
-                    check_list.append(item.text)
+                    check_list.append(Ingredient(item.text))
             console.log("Liste de courses complète : ")
             console.log(check_list)
             for item in note.items:
                 item.delete()
             for item in check_list:
-                note.add(item,False)
+                note.add(str(item),False)
                 
         console.log("synchronisation de la note vers Google Keep")
         keep.sync()
