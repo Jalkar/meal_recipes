@@ -14,7 +14,7 @@ class Ingredient():
             self.quantity=""
 
     def __str__(self) -> str:
-        return self.raw
+        return str(self.raw)
         
     def __repr__(self) -> str:
-        return self.raw
+        return str(self.raw)

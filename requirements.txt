@@ -1,4 +1,4 @@
-rich
 trello
 gkeepapi
-dotenv
+python-dotenv
+azure-functions
