@@ -21,19 +21,23 @@ def get_trello_check_list():
     trello = TrelloApi(SECRETS.TRELLO_API_KEY)
 
     # if token is dead :
-    # token_url= trello.get_token_url('My App', expires='30days', write_access=True)
+    console.log("if you have authenttication issue please access this url to authorize the application")
+    token_url= trello.get_token_url('My App', expires='30days', write_access=True)
+    console.log(token_url)
+    console.log("once the token received, please store it in the .secret file")
     
     trello.set_token(SECRETS.TRELLO_AUTH_TOKEN)
 
-    lists = trello.boards.get_list(board_id="60170c6aeb47ca633e7ab278",fields="name,id")
+    lists = trello.boards.get_list(board_id=SECRETS.BOARD_ID,fields="name,id")
 
     all_ingredients=[]
+    list_to_ignore=[x.strip() for x in SECRETS.BOARD_LIST_NAME_TO_IGNORE.split(",")]
     for list in lists:
-        if list["name"] not in ("Base Recettes SUCRÉES","Base Recettes SALÉES"):
+        if list["name"] not in list_to_ignore:
             console.log(f"{list['name']}")        
             cards = trello.lists.get_card(list["id"],checklists="all",fields="name,attachments,labels,desc")
             for card in cards:
-                recipe=Recipe(card)    
+                recipe=Recipe(card,SECRETS.BOARD_SHOPPING_CHECKLIST)    
                 console.log(f"  |-{recipe}")    
                 console.log(f"    |-{recipe.ingredients}")    
                 all_ingredients += recipe.ingredients
@@ -49,7 +53,7 @@ def send_checklist_to_keep(check_list):
     keep = gkeepapi.Keep()
     success = keep.login(SECRETS.KEEP_GOOGLE_ACCOUNT, SECRETS.KEEP_AUTH_TOKEN)
     if success:
-        gnotes = keep.find(query='Courses',pinned=True)
+        gnotes = keep.find(query=SECRETS.KEEP_NOTE_NAME,pinned=True)
         for note in gnotes:
             console.log(f"found {note.title}")
             for item in note.unchecked:
