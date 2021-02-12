@@ -28,12 +28,18 @@ class Ingredient():
     
     def sum_all_numeric_quantity(self):
         str_quant = [x for x in self.quantities if not Ingredient.isdigit(x)]
-        self.quantities=[sum([float(x) for x in self.quantities if Ingredient.isdigit(x)])]
+        sum_quant=sum([float(x) for x in self.quantities if Ingredient.isdigit(x)])
+        self.quantities=[]
+        if sum_quant > 0:
+            self.quantities=[sum_quant]
         if len(str_quant):
             self.quantities+=str_quant
 
     def __str__(self) -> str:
-        return f"{self.quantities} - {self.text}"
+        #str_q=""
+        #for q in self.quantities:
+        str_q = " + ".join([str(x) for x in self.quantities])
+        return f"{str_q} {self.text}"
         
     def __repr__(self) -> str:
         return str(self)

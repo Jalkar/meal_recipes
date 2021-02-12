@@ -1,25 +1,39 @@
 from trello import TrelloApi
 from . import secrets
-from .import recipe
+from . import recipe
 from . import ingredient
 from . import shopping_list
 import gkeepapi
 
 import azure.functions as func
 import logging
+from requests.exceptions import HTTPError
 
 SECRETS=secrets.Secrets()
 def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
     try:
-        ingredients = get_trello_check_list()
+        try:
+            logging.info("connecting to Trello API")
+            trello = TrelloApi(SECRETS.TRELLO_API_KEY)
+            SECRETS.reload_trello_token()            
+            trello.set_token(SECRETS.TRELLO_AUTH_TOKEN)
+            ingredients = get_trello_check_list(trello)
+        except HTTPError as e :
+            token_url= trello.get_token_url('My App', expires='30days', write_access=True)
+            logging.exception(e)
+            return func.HttpResponse(
+                f"Authentication error with Trello API. Please access to this url and update the configuration with the new token : \n {token_url}",
+                status_code=401
+            )
+
         keep_connection,note = get_checklist_from_keep()
         send_checklist_to_keep(ingredients,note) 
         sync_keep(keep_connection)
 
         logging.info("success!")       
         return func.HttpResponse(
-             f"Succes ! The new ingredients adds are the following : {ingredients}",
+             f"Succes ! The new ingredients added are the following : \n {ingredients}",
              status_code=200
         )
     except Exception as e:        
@@ -30,18 +44,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         )
 
 
-def get_trello_check_list():
-    logging.info("connexion à Trello")
-    trello = TrelloApi(SECRETS.TRELLO_API_KEY)
-
-    # if token is dead :
-    logging.info("if you have authenttication issue please access this url to authorize the application")
-    token_url= trello.get_token_url('My App', expires='30days', write_access=True)
-    logging.info(token_url)
-    logging.info("once the token received, please store it in the .secret file")
-    
-    trello.set_token(SECRETS.TRELLO_AUTH_TOKEN)
-
+def get_trello_check_list(trello):
     lists = trello.boards.get_list(board_id=SECRETS.BOARD_ID,fields="name,id")
 
     all_ingredients=[]
@@ -59,13 +62,13 @@ def get_trello_check_list():
                 all_ingredients += r.ingredients
                 
     # print(json.dumps(cards, sort_keys=True, indent=4,ensure_ascii=False))    
-    logging.info("Tous les ingrédients à prévoir:")
+    logging.info("list of the new ingredient to add to the shopping list")
     logging.info(all_ingredients)
     return all_ingredients
         
 
 def get_checklist_from_keep():
-    logging.info("connexion à Google Keep")
+    logging.info("Connecting to Google Keep")
     keep = gkeepapi.Keep()
     success = keep.login(SECRETS.KEEP_GOOGLE_ACCOUNT, SECRETS.KEEP_AUTH_TOKEN)
     if success:
@@ -79,7 +82,7 @@ def get_checklist_from_keep():
     return keep,list_gnotes[0]
 
 def sync_keep(keep):
-    logging.info("SYNC to KEEP")
+    logging.info("synchronisation to Google Keep")
     keep.sync()
 
 def send_checklist_to_keep(check_list,keep_note):
@@ -100,5 +103,5 @@ def send_checklist_to_keep(check_list,keep_note):
     
     logging.debug("Write the note")
     logging.info(global_shopping_list)
-    for item in global_shopping_list.list_ingredients.items():
-        keep_note.add(str(item),False)
+    for item in global_shopping_list.list_ingredients.values():
+        keep_note.add(str(item).strip(),False)

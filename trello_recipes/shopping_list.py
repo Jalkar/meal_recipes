@@ -29,8 +29,9 @@ class Shopping_List():
 # testShoppingList.add_ingredient(ingredient.Ingredient("1 Oignon"))
 # testShoppingList.add_ingredient(ingredient.Ingredient("0.5 Oignon"))
 # testShoppingList.add_ingredient(ingredient.Ingredient("1.4g Oignon"))
-# testShoppingList.add_ingredient(ingredient.Ingredient("0.5 Oignon"))
+# testShoppingList.add_ingredient(ingredient.Ingredient("0.5d Oignon"))
 
 # print(testShoppingList)
+# print(testShoppingList.list_ingredients.values())
 
 

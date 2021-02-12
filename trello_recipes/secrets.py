@@ -13,3 +13,6 @@ class Secrets():
         self.BOARD_LIST_NAME_TO_IGNORE = os.getenv("BOARD_LIST_NAME_TO_IGNORE").split(",")
         self.BOARD_SHOPPING_CHECKLIST = os.getenv("BOARD_SHOPPING_CHECKLIST")
         self.KEEP_NOTE_NAME = os.getenv("KEEP_NOTE_NAME")
+
+    def reload_trello_token(self):
+        self.TRELLO_AUTH_TOKEN = os.getenv("TRELLO_AUTH_TOKEN")
