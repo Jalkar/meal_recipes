@@ -2,3 +2,4 @@ trello
 gkeepapi
 python-dotenv
 azure-functions
+pattern

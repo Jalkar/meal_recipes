@@ -1,3 +1,5 @@
+from pattern.fr import singularize, pluralize
+
 class Ingredient():
     def __init__(self,ingredient):
         self.raw=ingredient
@@ -9,14 +11,14 @@ class Ingredient():
         quant=self.raw.split()[0]
         if Ingredient.isdigit(quant):
             self.quantities.append(float(quant))
-            self.text=" ".join(self.raw.split()[1:])
+            self.text=" ".join([singularize(x) for x in self.raw.split()[1:]])
         else:
             # quantity with a unit (starting with a digit)
             if Ingredient.isdigit(self.raw[0]):
-                self.text=" ".join(self.raw.split()[1:])
+                self.text=" ".join([singularize(x) for x in self.raw.split()[1:]])
                 self.quantities.append(quant)
-            else:
-                self.text=self.raw
+            else:                
+                self.text=" ".join([singularize(x) for x in self.raw.split()])
 
     def update_quantity(self,quant):
         if isinstance(quant,list):
@@ -38,7 +40,13 @@ class Ingredient():
     def __str__(self) -> str:
         #str_q=""
         #for q in self.quantities:
-        str_q = " + ".join([str(x) for x in self.quantities])
+        list_of_q=[]
+        for q in self.quantities:
+            if isinstance(q,float) and q.is_integer():
+                list_of_q.append(str(int(q)))
+            else:
+                list_of_q.append(str(q))
+        str_q = " + ".join(list_of_q)
         return f"{str_q} {self.text}"
         
     def __repr__(self) -> str:
