@@ -2,6 +2,7 @@ from trello import TrelloApi
 from . import secrets
 from .import recipe
 from . import ingredient
+from . import shopping_list
 import gkeepapi
 
 import azure.functions as func
@@ -12,7 +13,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
     try:
         ingredients = get_trello_check_list()
-        send_checklist_to_keep(ingredients) 
+        keep_connection,note = get_checklist_from_keep()
+        send_checklist_to_keep(ingredients,note) 
+        sync_keep(keep_connection)
+
         logging.info("success!")       
         return func.HttpResponse(
              f"Succes ! The new ingredients adds are the following : {ingredients}",
@@ -50,7 +54,8 @@ def get_trello_check_list():
             for card in cards:
                 r=recipe.Recipe(card,SECRETS.BOARD_SHOPPING_CHECKLIST)    
                 logging.info(f"  |-{r}")    
-                logging.info(f"    |-{r.ingredients}")    
+                for i in r.ingredients:
+                    logging.info(f"    |-{i}")    
                 all_ingredients += r.ingredients
                 
     # print(json.dumps(cards, sort_keys=True, indent=4,ensure_ascii=False))    
@@ -59,25 +64,41 @@ def get_trello_check_list():
     return all_ingredients
         
 
-def send_checklist_to_keep(check_list):
+def get_checklist_from_keep():
     logging.info("connexion à Google Keep")
     keep = gkeepapi.Keep()
     success = keep.login(SECRETS.KEEP_GOOGLE_ACCOUNT, SECRETS.KEEP_AUTH_TOKEN)
     if success:
         gnotes = keep.find(query=SECRETS.KEEP_NOTE_NAME,pinned=True)
-        for note in gnotes:
-            logging.info(f"found {note.title}")
-            for item in note.unchecked:
-                if item.text.strip():
-                    check_list.append(ingredient.Ingredient(item.text))
-            logging.info("Liste de courses complète : ")
-            logging.info(check_list)
-            for item in note.items:
-                item.delete()
-            for item in check_list:
-                note.add(str(item),False)
-                
-        logging.info("synchronisation de la note vers Google Keep")
-        keep.sync()
-    else:
-        logging.info("[red]ECHEC synchronisation de la note vers Google Keep[/red]")
+        list_gnotes=list(gnotes)
+        # logging.info(gnotes.title)
+    if len(list_gnotes)>1:
+        logging.exception("Too many notes !")
+        raise ValueError(f"Too Many Pinned notes in keep with the name {SECRETS.KEEP_NOTE_NAME}")
+
+    return keep,list_gnotes[0]
+
+def sync_keep(keep):
+    logging.info("SYNC to KEEP")
+    keep.sync()
+
+def send_checklist_to_keep(check_list,keep_note):
+    logging.info("Build the note in KEEP")
+    logging.debug("Read existing ingredient")
+    for item in keep_note.unchecked:
+        if item.text.strip():
+            check_list.append(ingredient.Ingredient(item.text))
+    
+    logging.debug("Aggregate shopping list")
+    global_shopping_list=shopping_list.Shopping_List()
+    for item in check_list:
+        global_shopping_list.add_ingredient(item)
+
+    logging.debug("Clean existing Note")
+    for item in keep_note.items:
+        item.delete()
+    
+    logging.debug("Write the note")
+    logging.info(global_shopping_list)
+    for item in global_shopping_list.list_ingredients.items():
+        keep_note.add(str(item),False)
