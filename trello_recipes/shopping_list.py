@@ -19,6 +19,9 @@ class Shopping_List():
             str_string+=f"{key} - {str(ing.quantities)}\n"
         return str_string
 
+    def sort(self):
+        # sorted(self.list_ingredients)
+        self.list_ingredients = dict(sorted(self.list_ingredients.items(), key = lambda kv: kv[0]))
 
     def __repr__(self) -> str:
         return str(self)
@@ -28,8 +31,9 @@ class Shopping_List():
 # testShoppingList.add_ingredient(ingredient.Ingredient("1 Oignon"))
 # testShoppingList.add_ingredient(ingredient.Ingredient("1 Oignon"))
 # testShoppingList.add_ingredient(ingredient.Ingredient("0.5 Oignon"))
-# testShoppingList.add_ingredient(ingredient.Ingredient("1.4g Oignon"))
-# testShoppingList.add_ingredient(ingredient.Ingredient("0.5d Oignon"))
+# testShoppingList.add_ingredient(ingredient.Ingredient("1.4g sOignon"))
+# testShoppingList.add_ingredient(ingredient.Ingredient("0.5d aOignon"))
+# testShoppingList.sort()
 
 # print(testShoppingList)
 # print(testShoppingList.list_ingredients.values())
