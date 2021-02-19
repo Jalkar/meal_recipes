@@ -96,6 +96,8 @@ def send_checklist_to_keep(check_list,keep_note):
     global_shopping_list=shopping_list.Shopping_List()
     for item in check_list:
         global_shopping_list.add_ingredient(item)
+    
+    global_shopping_list.sort()
 
     logging.debug("Clean existing Note")
     for item in keep_note.items:
@@ -103,5 +105,8 @@ def send_checklist_to_keep(check_list,keep_note):
     
     logging.debug("Write the note")
     logging.info(global_shopping_list)
+    sort_indice=len(global_shopping_list.list_ingredients)
+    current=0
     for item in global_shopping_list.list_ingredients.values():
-        keep_note.add(str(item).strip(),False)
+        current+=1
+        keep_note.add(str(item).strip(),False,sort=(sort_indice - current))
