@@ -9,7 +9,7 @@ class Recipe():
 
     def parse_ingredient(self,trello_card,checklist_name):
         for checklist in trello_card["checklists"]:
-            if checklist["name"]==checklist_name:
+            if checklist["name"].lower()==checklist_name.lower():
                 for item in checklist["checkItems"]:                           
                     self.ingredients.append(ingredient.Ingredient(item["name"]))
 
